@@ -4,7 +4,6 @@ syntax=docker/dockerfile:1
 FROM node:20-bullseye AS deps
 WORKDIR /app
 COPY package.json ./
-RUN corepack enable && corepack prepare pnpm@9.7.0 --activate || true
 RUN npm i --no-audit --no-fund
 
 FROM node:20-bullseye AS build

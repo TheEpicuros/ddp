@@ -1,14 +1,16 @@
-name: Admin — bulk delete runs
+name: Admin - bulk delete runs
 on:
   workflow_dispatch:
     inputs:
-      dry_run:
+      preview:
         description: "Preview only (no deletions)"
         type: boolean
+        required: true
         default: true
       keep_active:
         description: "Keep newest N runs for active workflows"
         type: number
+        required: true
         default: 30
 
 permissions:
@@ -19,13 +21,13 @@ jobs:
   clean:
     runs-on: ubuntu-latest
     steps:
-      - name: Ensure jq & gh
+      - name: Install jq and gh
         run: |
           sudo apt-get update
           sudo apt-get install -y jq gh || true
           gh --version || true
 
-      - name: Build deletion plan (dynamic: keep only deploy + package-knowledge)
+      - name: Build deletion plan
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
@@ -33,18 +35,14 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Only these workflows keep newest N runs:
-          ACTIVE='[
-            ".github/workflows/deploy.yml",
-            ".github/workflows/package-knowledge.yml"
-          ]'
+          ACTIVE='[".github/workflows/deploy.yml",".github/workflows/package-knowledge.yml"]'
 
-          # Fetch ALL workflow file paths GitHub knows about
+          # Get all workflow paths GitHub knows about
           gh api --paginate /repos/$REPO/actions/workflows -q '.workflows[].path' \
             | jq -s '.' > wf_paths.json
 
-          # Fetch ALL runs (includes historical paths)
-          gh api --paginate /repos/$REPO/actions/runs -q '.workflow_runs[] | {id, created_at, path, workflow_id}' \
+          # Get all runs (includes historical paths)
+          gh api --paginate /repos/$REPO/actions/runs -q '.workflow_runs[] | {id, created_at, path}' \
             | jq -s '.' > runs.json
 
           # Plan:
@@ -79,12 +77,12 @@ jobs:
 
           echo "PLAN SUMMARY:"; jq '.summary' plan.json
 
-      - name: DRY RUN — show first 30 IDs
-        if: ${{ inputs.dry_run }}
+      - name: Dry run output
+        if: ${{ inputs.preview }}
         run: jq -r '.delete_ids[:30][]' plan.json
 
       - name: Delete runs
-        if: ${{ !inputs.dry_run }}
+        if: ${{ !inputs.preview }}
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}

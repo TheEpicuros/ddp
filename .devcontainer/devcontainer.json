@@ -1,0 +1,20 @@
+{
+  "name": "ddp-dev",
+  "dockerFile": "Dockerfile",
+  "features": {},
+  "settings": {
+    "terminal.integrated.defaultProfile.linux": "bash"
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "github.copilot",
+        "github.copilot-chat",
+        "redhat.vscode-yaml",
+        "foxundermoon.shell-format",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+  "remoteUser": "vscode"
+}
